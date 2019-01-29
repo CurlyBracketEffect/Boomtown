@@ -1,5 +1,5 @@
 const strs = require('stringstream');
-
+let x =0;
 function tagsQueryString(tags, itemid, result) {
   /**
    * Challenge:
@@ -19,6 +19,7 @@ function tagsQueryString(tags, itemid, result) {
 
 module.exports = (postgres) => {
   return {
+    //LATER -- PART 2
     async createUser({ fullname, email, password }) {
       const newUserInsert = {
         text: '', // @TODO: Authentication - Server
@@ -38,6 +39,7 @@ module.exports = (postgres) => {
         }
       }
     },
+        //LATER -- PART 2
     async getUserAndPasswordForVerification(email) {
       const findUserQuery = {
         text: '', // @TODO: Authentication - Server
@@ -73,7 +75,7 @@ module.exports = (postgres) => {
        */
 
       const findUserQuery = {
-        text: '', // @TODO: Basic queries
+        text: 'SELECT * FROM users WHERE id = $1', // @TODO: Basic queries
         values: [id]
       };
 
@@ -85,65 +87,88 @@ module.exports = (postgres) => {
        *  Here is an example throw statement: throw 'User was not found.'
        *  Customize your throw statements so the message can be used by the client.
        */
-
+     
       const user = await postgres.query(findUserQuery);
-      return user;
-      // -------------------------------
+      
+      if (user.rowCount < 1) throw 'User is not found'; //if the id passed in doesn't exist, throw an error
+    
+      return user.rows[0];
+      
     },
     async getItems(idToOmit) {
       const items = await postgres.query({
-        /**
-         *  @TODO: Advanced queries
-         *
-         *  Get all Items. If the idToOmit parameter has a value,
-         *  the query should only return Items were the ownerid column
-         *  does not contain the 'idToOmit'
-         *
-         *  Hint: You'll need to use a conditional AND and WHERE clause
-         *  to your query text using string interpolation
-         */
-
-        text: ``,
+        text: `SELECT * FROM items ${idToOmit ? `WHERE NOT id = $1;` : ''}`,      
         values: idToOmit ? [idToOmit] : []
       });
+      // console.log(idToOmit)
+
+      console.log(items.rows)
+      if (items.rowCount < 1) throw 'No items were found'; //if no items were returned, throw this error
+
+
       return items.rows;
     },
+    // PART 1
     async getItemsForUser(id) {
       const items = await postgres.query({
         /**
          *  @TODO: Advanced queries
-         *  Get all Items. Hint: You'll need to use a LEFT INNER JOIN among others
+         *  
          */
-        text: ``,
+        text: `SELECT * FROM items WHERE ownerid = $1`,
         values: [id]
       });
+
+      console.log(items)
+
+      //@TODO Error message if the id does not exist
       return items.rows;
     },
+    // PART 1
     async getBorrowedItemsForUser(id) {
       const items = await postgres.query({
         /**
          *  @TODO: Advanced queries
-         *  Get all Items. Hint: You'll need to use a LEFT INNER JOIN among others
+         *  
          */
-        text: ``,
+        text: `SELECT * FROM items where borrowerid = $1`,
         values: [id]
       });
       return items.rows;
     },
     async getTags() {
-      const tags = await postgres.query(/* @TODO: Basic queries */);
+      // PART 1
+      const tags = await postgres.query({
+        text: `SELECT * from tags`,
+        values: []
+      });
       return tags.rows;
     },
     async getTagsForItem(id) {
+      // PART 1
       const tagsQuery = {
-        text: ``, // @TODO: Advanced queries
+        text: `SELECT tags.title, items.title
+        FROM tags
+        INNER JOIN items ON tags.id=items.tags;`, // @TODO: Advanced queries
         values: [id]
       };
 
       const tags = await postgres.query(tagsQuery);
+      
+      console.log(tags.rows)
+      console.log(x)
+      x++
       return tags.rows;
     },
-    async saveNewItem({ item, image, user }) {
+    // NOW
+    async saveNewItem({
+      title,
+      imageURL,
+      description,
+      ownerID,
+      borrowerID,
+      tagIDs,
+    }) {
       /**
        *  @TODO: Adding a New Item
        *
@@ -163,98 +188,54 @@ module.exports = (postgres) => {
        *  Read the method and the comments carefully before you begin.
        */
 
-      return new Promise((resolve, reject) => {
-        /**
-         * Begin transaction by opening a long-lived connection
-         * to a client from the client pool.
-         */
-        postgres.connect((err, client, done) => {
-          try {
-            // Begin postgres transaction
-            client.query('BEGIN', err => {
-              // Convert image (file stream) to Base64
-              const imageStream = image.stream.pipe(strs('base64'));
+      /**
+       * Begin transaction by opening a long-lived connection
+       * to a client from the client pool.
+       * - Read about transactions here: https://node-postgres.com/features/transactions
+       */
+      const client = await postgres.connect()
+      try {
+        // Begin postgres transaction
+        await client.query('BEGIN')
 
-              let base64Str = '';
-              imageStream.on('data', data => {
-                base64Str += data;
-              });
+        // Insert new Item
+        // @TODO
+        // -------------------------------
+        const itemResult = await client.query({
+          text: `INSERT INTO items (title, imageURL, description, ownerID, borrowerID) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+          values: [title, imageURL, description, ownerID, borrowerID]
+        })
 
-              imageStream.on('end', async () => {
-                // Image has been converted, begin saving things
-                const { title, description, tags } = item;
+        // Insert tags
+        // @TODO
+        // -------------------------------
 
-                // Generate new Item query
-                // @TODO
-                // -------------------------------
+        const item_id = itemResult.rows[0].id
+        const tagPromise = tagIDs.map(async (tagID)=>{
+          await client.query({
+            text: `INSERT INTO items_tags (item_id, tag_id) VALUES ($1, $2)`, 
+            values: [item_id, tagID]
+          })
+        })
+        await Promise.all(
+          tagPromise
+        )
 
-                // Insert new Item
-                // @TODO
-                // -------------------------------
 
-                const imageUploadQuery = {
-                  text:
-                    'INSERT INTO uploads (itemid, filename, mimetype, encoding, data) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-                  values: [
-                    // itemid,
-                    image.filename,
-                    image.mimetype,
-                    'base64',
-                    base64Str
-                  ]
-                };
+        // Commit the entire transaction!
+        await client.query('COMMIT')
 
-                // Upload image
-                const uploadedImage = await client.query(imageUploadQuery);
-                const imageid = uploadedImage.rows[0].id;
-
-                // Generate image relation query
-                // @TODO
-                // -------------------------------
-
-                // Insert image
-                // @TODO
-                // -------------------------------
-
-                // Generate tag relationships query (use the'tagsQueryString' helper function provided)
-                // @TODO
-                // -------------------------------
-
-                // Insert tags
-                // @TODO
-                // -------------------------------
-
-                // Commit the entire transaction!
-                client.query('COMMIT', err => {
-                  if (err) {
-                    throw err;
-                  }
-                  // release the client back to the pool
-                  done();
-                  // Uncomment this resolve statement when you're ready!
-                  // resolve(newItem.rows[0])
-                  // -------------------------------
-                });
-              });
-            });
-          } catch (e) {
-            // Something went wrong
-            client.query('ROLLBACK', err => {
-              if (err) {
-                throw err;
-              }
-              // release the client back to the pool
-              done();
-            });
-            switch (true) {
-              case /uploads_itemid_key/.test(e.message):
-                throw 'This item already has an image.';
-              default:
-                throw e;
-            }
+        return itemResult.rows[0]
+      } catch (e) {
+        // Something went wrong
+        client.query('ROLLBACK', err => {
+          if (err) {
+            throw err;
           }
+          // release the client back to the pool
         });
-      });
+        throw e;
+      }
     }
-  };
-};
+  }
+}

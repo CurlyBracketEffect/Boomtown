@@ -49,7 +49,7 @@ module.exports = (app) => {
   
   app.set('PG_USER', process.env.PG_USER ||'boomtown')
   app.set('PG_PASSWORD', process.env.PG_PASSWORD ||'boomtown')
-  app.set('PG_DB', process.env.PG_DB ||'booomtown')
+  app.set('PG_DB', process.env.PG_DB ||'boomtown')
   app.set('JWT_SECRET', process.env.JWT_SECTRET ||'DEV_SECRET')
 
   app.use(cookieParser());
@@ -65,7 +65,7 @@ module.exports = (app) => {
   if (process.env.NODE_ENV === 'development') {
     // Allow requests from dev server address
     const corsConfig = {
-      origin: 'http://localhost:3000',
+      origin: 'http://localhost:8080',
       credentials: true
     };
     app.set('CORS_CONFIG', corsConfig);

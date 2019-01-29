@@ -28,6 +28,8 @@ module.exports = (app) => {
 
     Query: {
       viewer() {
+
+        //PART 2
         /**
          * @TODO: Authentication - Server
          *
@@ -45,6 +47,7 @@ module.exports = (app) => {
         return null;
       },
       async user(parent, { id }, { pgResource }, info) {
+        console.log(id)
         try {
           const user = await pgResource.getUserById(id);
           return user;
@@ -52,15 +55,24 @@ module.exports = (app) => {
           throw new ApolloError(e);
         }
       },
-      async items() {
-        // @TODO: Replace this mock return statement with the correct items from Postgres
-        return [];
+      async items(parent, args , { pgResource }, info) {
+        // PART 1
+        try {
+          const item = await pgResource.getItems(args.filter);
+          return item;
+        } catch (e) {
+          throw new ApolloError(e);
+        }
         // -------------------------------
       },
-      async tags() {
-        // @TODO: Replace this mock return statement with the correct tags from Postgres
-        return [];
-        // -------------------------------
+      async tags(parent, { id }, { pgResource }, info) {
+        // PART 1
+        try {
+          const allTags = await pgResource.getTags();
+          return allTags;
+        } catch (e) {
+          throw new ApolloError(e);
+        }
       }
     },
 
@@ -76,16 +88,20 @@ module.exports = (app) => {
        *
        */
       // @TODO: Uncomment these lines after you define the User type with these fields
-      // items() {
-      //   // @TODO: Replace this mock return statement with the correct items from Postgres
-      //   return []
-      //   // -------------------------------
-      // },
-      // borrowed() {
-      //   // @TODO: Replace this mock return statement with the correct items from Postgres
-      //   return []
-      //   // -------------------------------
-      // }
+      async items(user,{ },{ pgResource }) {
+        try {
+          const items = await pgResource.getItemsForUser(user.id);
+          return items;
+        } catch (e) {
+          throw new ApolloError(e);
+        }
+      
+      },
+      borrowed(user,{ },{ pgResource }) {
+        // @TODO: Replace this mock return statement with the correct items from Postgres
+        return []
+        // -------------------------------
+      }
       // -------------------------------
     },
 
@@ -101,7 +117,7 @@ module.exports = (app) => {
        *
        */
       // @TODO: Uncomment these lines after you define the Item type with these fields
-      // async itemowner() {
+      // async owner() {
       //   // @TODO: Replace this mock return statement with the correct user from Postgres
       //   return {
       //     id: 29,
@@ -111,11 +127,15 @@ module.exports = (app) => {
       //   }
       //   // -------------------------------
       // },
-      // async tags() {
-      //   // @TODO: Replace this mock return statement with the correct tags for the queried Item from Postgres
-      //   return []
-      //   // -------------------------------
-      // },
+      async tags(parent, { id }, { pgResource }, info){
+        console.log('test')
+        try {
+          const tags = await pgResource.getTagsForItem(id);
+          return tags;
+        } catch (e) {
+          throw new ApolloError(e);
+        }
+      }
       // async borrower() {
       //   /**
       //    * @TODO: Replace this mock return statement with the correct user from Postgres
@@ -123,13 +143,8 @@ module.exports = (app) => {
       //    */
       //   return null
       //   // -------------------------------
-      // },
-      // async imageurl({ imageurl, imageid, mimetype, data }) {
-      //   if (imageurl) return imageurl
-      //   if (imageid) {
-      //     return `data:${mimetype};base64, ${data}`
-      //   }
       // }
+      //
       // -------------------------------
     },
 
@@ -152,13 +167,11 @@ module.exports = (app) => {
          *  destructuring should look like.
          */
 
-        image = await image;
-        const user = await jwt.decode(context.token, app.get('JWT_SECRET'));
-        const newItem = await context.pgResource.saveNewItem({
-          item: args.item,
-          image: args.image,
-          user
-        });
+        // image = await image;
+        // const user = await jwt.decode(context.token, app.get('JWT_SECRET'));
+        const newItem = await context.pgResource.saveNewItem(
+          args.input,
+        );
         return newItem;
       }
     }
