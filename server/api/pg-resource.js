@@ -53,7 +53,7 @@ module.exports = (postgres) => {
         throw 'User was not found.';
       }
     },
-    async getUserById(id) {
+    async getUserById(id) {//given the id for a user, return all the data in that row   //WORKS
       /**
        *  @TODO: Handling Server Errors
        *
@@ -75,7 +75,7 @@ module.exports = (postgres) => {
        */
 
       const findUserQuery = {
-        text: 'SELECT * FROM users WHERE id = $1', // @TODO: Basic queries
+        text: 'SELECT * FROM users WHERE id = $1', 
         values: [id]
       };
 
@@ -95,48 +95,32 @@ module.exports = (postgres) => {
       return user.rows[0];
       
     },
-    async getItems(idToOmit) {
+    async getItems(idToOmit) { //WORKS
       const items = await postgres.query({
         text: `SELECT * FROM items ${idToOmit ? `WHERE NOT id = $1;` : ''}`,      
         values: idToOmit ? [idToOmit] : []
       });
-      // console.log(idToOmit)
-
-      console.log(items.rows)
       if (items.rowCount < 1) throw 'No items were found'; //if no items were returned, throw this error
-
-
       return items.rows;
     },
     // PART 1
-    async getItemsForUser(id) {
+    async getItemsForUser(id) { //Returns a list of all the items a user owns //WORKS
       const items = await postgres.query({
-        /**
-         *  @TODO: Advanced queries
-         *  
-         */
         text: `SELECT * FROM items WHERE ownerid = $1`,
         values: [id]
       });
-
-      console.log(items)
-
-      //@TODO Error message if the id does not exist
+      //Error message if the id does not exist handled under USER
       return items.rows;
     },
     // PART 1
-    async getBorrowedItemsForUser(id) {
+    async getBorrowedItemsForUser(id) { //Returns a list of all items a user has borrowed //WORKS
       const items = await postgres.query({
-        /**
-         *  @TODO: Advanced queries
-         *  
-         */
         text: `SELECT * FROM items where borrowerid = $1`,
         values: [id]
       });
       return items.rows;
     },
-    async getTags() {
+    async getTags() { //Returns a list of all tags //WORKS
       // PART 1
       const tags = await postgres.query({
         text: `SELECT * from tags`,
@@ -144,7 +128,7 @@ module.exports = (postgres) => {
       });
       return tags.rows;
     },
-    async getTagsForItem(id) {
+    async getTagsForItem(id) { //Returns a list of all the tags that belong to an item //DOES NOT WORK!!!
       // PART 1
       const tagsQuery = {
         text: `SELECT tags.title, items.title
@@ -159,6 +143,22 @@ module.exports = (postgres) => {
       console.log(x)
       x++
       return tags.rows;
+    },
+    async getItemsOwner(itemID) { //Returns the owner of an item
+      // PART 1
+      const user = await postgres.query({
+        text: `SELECT * FROM users WHERE id =(SELECT ownerid FROM items WHERE id = $1)`,
+        values: [itemID]
+      });
+      return user.rows;
+    },
+    async getItemsBorrower(itemID) { //Returns the borrower of an item
+      // PART 1
+      const user = await postgres.query({
+        text: `SELECT * FROM users WHERE id =(SELECT borrowerid FROM items WHERE id = $1)`,
+        values: [itemID]
+      });
+      return user.rows;
     },
     // NOW
     async saveNewItem({
@@ -202,8 +202,8 @@ module.exports = (postgres) => {
         // @TODO
         // -------------------------------
         const itemResult = await client.query({
-          text: `INSERT INTO items (title, imageURL, description, ownerID, borrowerID) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-          values: [title, imageURL, description, ownerID, borrowerID]
+          text: `INSERT INTO items (title, imageURL, description, ownerID, borrowerID, tags) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+          values: [title, imageURL, description, ownerID, borrowerID,]//currently does not return the array of tagIDs
         })
 
         // Insert tags

@@ -20,10 +20,10 @@ module.exports = gql`
     title: String!
     imageURL: String
     description: String!
-    owner: User!
+    owner(itemID: ID!): User!
     borrower: User
     tags: [Tag!]# Should have ! but removed it to test until the data in the tables allows for this 
-    
+
   }
 
   type User {
