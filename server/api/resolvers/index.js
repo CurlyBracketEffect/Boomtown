@@ -16,10 +16,12 @@
 const { ApolloError } = require('apollo-server-express');
 
 // @TODO: Uncomment these lines later when we add auth
-// const jwt = require("jsonwebtoken")
-// const authMutations = require("./auth")
+const jwt = require("jsonwebtoken")
+const authMutations = require("./auth")
 // -------------------------------
 const { UploadScalar, DateScalar } = require('../custom-types');
+
+const authenticate = require('../authenticate')
 
 module.exports = (app) => {
   return {
@@ -27,7 +29,7 @@ module.exports = (app) => {
     // Date: DateScalar,
 
     Query: {
-      viewer() {
+     async viewer(parent, args, context) {
 
         //PART 2
         /**
@@ -44,10 +46,15 @@ module.exports = (app) => {
          *  the token's stored user here. If there is no token, the user has signed out,
          *  in which case you'll return null
          */
-        return null;
+
+        const userID = authenticate(app, context.req)
+        
+        const user = await context.pgResource.getUserById(userID)
+
+        return user
       },
-      async user(parent, { id }, { pgResource }, info) { //WORKS!!!
-        console.log(id)
+      async user(parent, { id }, { pgResource, req }, info) { //WORKS!!!
+        authenticate(app, req)
         try {
           const user = await pgResource.getUserById(id);
           return user;
@@ -55,18 +62,19 @@ module.exports = (app) => {
           throw new ApolloError(e);
         }
       },
-      async items(parent, args , { pgResource }, info) { //WORKS
-        // PART 1
+      async items(parent, args , { pgResource, req }, info) { //WORKS
+        authenticate(app, req)
         try {
-          const item = await pgResource.getItems(args.filter);
-          return item;
+          const items = await pgResource.getItems(args.filter);
+          console.log('ITEMS', items)
+          return items;
         } catch (e) {
           throw new ApolloError(e);
         }
         // -------------------------------
       },
-      async tags(parent, { id }, { pgResource }, info) { //WORKS
-        // PART 1
+      async tags(parent, { id }, { pgResource, req}, info) { //WORKS
+        authenticate(app, req)
         try {
           const allTags = await pgResource.getTags();
           return allTags;
@@ -87,7 +95,7 @@ module.exports = (app) => {
        *  Items (GraphQL type) the user has lent (items) and borrowed (borrowed).
        *
        */
-      async items(user,{ },{ pgResource }) { //WORKS
+      async items(user,{ },{ pgResource  }) { //WORKS
         try {
           const items = await pgResource.getItemsForUser(user.id);
           return items;
@@ -119,29 +127,35 @@ module.exports = (app) => {
        *
        */
       // @TODO: Uncomment these lines after you define the Item type with these fields
-      async owner(item, { id }, { pgResource }) { //DOES NOT WORK
+      async owner(parent, { }, { pgResource }, info) { //WORKs
         try {
-          console.log(id)
-          const owner = await pgResource.getItemsOwner(id);
+          if (parent.ownerid == null) return null
+          const owner = await pgResource.getUserById(parent.ownerid);
           return owner;
         } catch (e) {
           throw new ApolloError(e);
         }
         // -------------------------------
       },
-      async tags(parent, { id }, { pgResource }, info){ //DOES NOT WORK
+      async tags(parent, { }, { pgResource }, info){ //WORKS
         try {
-          const tags = await pgResource.getTagsForItem(id);
+          const tags = await pgResource.getTagsForItem(parent.id);
           return tags;
         } catch (e) {
           throw new ApolloError(e);
         }
       },
-      async borrower() { //DOES NOT WORK
+      async borrower(parent, { }, { pgResource }, info) { //WORKS
         /**
          * @TODO: Replace this mock return statement with the correct user from Postgres
          * or null in the case where the item has not been borrowed.
          */
+        try {
+          const tags = await pgResource.getUserById(parent.borrowerid)
+          return tags
+        } catch (e) {
+          throw new ApolloError(e)
+        }
         return null
         // -------------------------------
       }
@@ -151,10 +165,11 @@ module.exports = (app) => {
 
     Mutation: {
       // @TODO: Uncomment this later when we add auth
-      // ...authMutations(app),
+      ...authMutations(app),
       // -------------------------------
 
-      async addItem(parent, args, context, info) {
+      addItem: async (parent, args, { pgResource, req }, info) => {
+        authenticate(app, req)        
         /**
          *  @TODO: Destructuring
          *
@@ -170,7 +185,7 @@ module.exports = (app) => {
 
         // image = await image;
         // const user = await jwt.decode(context.token, app.get('JWT_SECRET'));
-        const newItem = await context.pgResource.saveNewItem(
+        const newItem = await pgResource.saveNewItem(
           args.input,
         );
         return newItem;

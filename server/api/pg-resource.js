@@ -42,17 +42,14 @@ module.exports = (postgres) => {
         //LATER -- PART 2
     async getUserAndPasswordForVerification(email) {
       const findUserQuery = {
-        text: '', // @TODO: Authentication - Server
+        text: 'Select * from users where email = $1', // @TODO: Authentication - Server
         values: [email]
       };
-      try {
         const user = await postgres.query(findUserQuery);
         if (!user) throw 'User was not found.';
         return user.rows[0];
-      } catch (e) {
-        throw 'User was not found.';
-      }
     },
+
     async getUserById(id) {//given the id for a user, return all the data in that row   //WORKS
       /**
        *  @TODO: Handling Server Errors
@@ -65,7 +62,7 @@ module.exports = (postgres) => {
        *
        *  Errors thrown from our resource will be captured and returned from our resolvers.
        *
-       *  This will be the basic logic for this resource method:
+       *  This will be the basic logic for this resource method:  
        *  1) Query for the user using the given id. If no user is found throw an error.
        *  2) If there is an error with the query (500) throw an error.
        *  3) If the user is found and there are no errors, return only the id, email, fullname, bio fields.
@@ -87,13 +84,12 @@ module.exports = (postgres) => {
        *  Here is an example throw statement: throw 'User was not found.'
        *  Customize your throw statements so the message can be used by the client.
        */
-     
+     try{
       const user = await postgres.query(findUserQuery);
-      
-      if (user.rowCount < 1) throw 'User is not found'; //if the id passed in doesn't exist, throw an error
-    
       return user.rows[0];
-      
+      }catch(e){
+        throw 'User is not found'
+      }
     },
     async getItems(idToOmit) { //WORKS
       const items = await postgres.query({
@@ -131,17 +127,12 @@ module.exports = (postgres) => {
     async getTagsForItem(id) { //Returns a list of all the tags that belong to an item //DOES NOT WORK!!!
       // PART 1
       const tagsQuery = {
-        text: `SELECT tags.title, items.title
-        FROM tags
-        INNER JOIN items ON tags.id=items.tags;`, // @TODO: Advanced queries
+        text: `SELECT * FROM tags INNER JOIN items_tags ON items_tags.tag_id = tags.id WHERE item_id = $1;`, // @TODO: Advanced queries
         values: [id]
       };
 
       const tags = await postgres.query(tagsQuery);
-      
-      console.log(tags.rows)
-      console.log(x)
-      x++
+
       return tags.rows;
     },
     async getItemsOwner(itemID) { //Returns the owner of an item
@@ -160,7 +151,6 @@ module.exports = (postgres) => {
       });
       return user.rows;
     },
-    // NOW
     async saveNewItem({
       title,
       imageURL,
@@ -236,6 +226,14 @@ module.exports = (postgres) => {
         });
         throw e;
       }
-    }
+    },
+    async createUser(userToAdd) { //Returns the borrower of an item
+      // PART 1
+      const user = await postgres.query({
+        text: `INSERT INTO users (username, email, bio, password) VALUES ($1, $2, $3, $4)RETURNING *`,
+        values: [userToAdd.username, userToAdd.email, userToAdd.bio, userToAdd.password]
+      });
+      return user.rows[0];
+    },
   }
 }

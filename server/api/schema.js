@@ -20,7 +20,7 @@ module.exports = gql`
     title: String!
     imageURL: String
     description: String!
-    owner(itemID: ID!): User!
+    owner: User
     borrower: User
     tags: [Tag!]# Should have ! but removed it to test until the data in the tables allows for this 
 
@@ -31,9 +31,9 @@ module.exports = gql`
     username: String!
     email: String
     bio: String
-
     items: [Item]
     borrowed: [Item]
+    password: String!
   }
 
   type Tag {
@@ -50,6 +50,18 @@ module.exports = gql`
     tagIDs: [ID!]
   }
 
+  input NewUserInput{
+    username: String!
+    email: String
+    bio: String
+    password: String!
+  }
+
+  input LoginInput{
+    email: String!
+    password: String!
+  }
+
   type Query {
     user(id: ID!): User
     viewer: User
@@ -58,7 +70,14 @@ module.exports = gql`
     tagsForItem(id:ID!): [Tag]
   }
 
+  type LoginResponse {
+    csrfToken: String!
+    user: User!
+  }
+
   type Mutation {
     addItem(input: NewItemInput!): Item!
+    signup(input: NewUserInput!): LoginResponse!
+    login(input: LoginInput!): LoginResponse!
   }
 `;

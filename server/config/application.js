@@ -52,6 +52,8 @@ module.exports = (app) => {
   app.set('PG_DB', process.env.PG_DB ||'boomtown')
   app.set('JWT_SECRET', process.env.JWT_SECTRET ||'DEV_SECRET')
 
+  app.set('JWT_COOKIE_NAME','token'
+  )
   app.use(cookieParser());
 
   if (process.env.NODE_ENV === 'production') {
@@ -62,10 +64,10 @@ module.exports = (app) => {
     app.use(fallback('index.html', { root }));
   }
 
-  if (process.env.NODE_ENV === 'development') {
+  if (process.env.NODE_ENV !== 'production') {
     // Allow requests from dev server address
     const corsConfig = {
-      origin: 'http://localhost:8080',
+      origin: true,
       credentials: true
     };
     app.set('CORS_CONFIG', corsConfig);
