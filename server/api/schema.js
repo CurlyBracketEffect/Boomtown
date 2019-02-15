@@ -22,7 +22,7 @@ module.exports = gql`
     description: String!
     owner: User
     borrower: User
-    tags: [Tag!]# Should have ! but removed it to test until the data in the tables allows for this 
+    tags: [Tag!]!
 
   }
 
@@ -45,7 +45,6 @@ module.exports = gql`
     title: String!
     imageURL: String
     description: String!
-    ownerID: ID!
     borrowerID: ID
     tagIDs: [ID!]
   }
@@ -65,7 +64,7 @@ module.exports = gql`
   type Query {
     user(id: ID!): User
     viewer: User
-    items(filter: ID!): [Item]
+    items(filter: ID): [Item]
     tags: [Tag]
     tagsForItem(id:ID!): [Tag]
   }

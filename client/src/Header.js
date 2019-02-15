@@ -17,8 +17,10 @@ const Header = ({
     >
     {({ loading, error, data }) => {
       if (loading) return <option>Loading...</option>;
-      console.log(error)
-      if (error) return <option>Error </option>;
+      if (error) {
+        console.log(error)
+        return <option>Error </option>;
+      }
     return(
       <div>
         <div> 

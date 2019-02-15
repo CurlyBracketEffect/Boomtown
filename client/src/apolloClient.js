@@ -22,6 +22,7 @@ const authLink = setContext((_, { headers }) => {
 
 const apolloClient = new ApolloClient({
   link: authLink.concat(httpLink),
+  // .concat(),  TODO: add a way to check for an unauthorized error and if so delete csrfToken to prevent the 'jwt expiry' bug
   cache: new InMemoryCache()
 });
 

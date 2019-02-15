@@ -19,9 +19,12 @@ const Borrowed = ()=> (
     >
     {({ loading, error, data }) => {
       if (loading) return <option>Loading...</option>
-      if (error) return <option>Error :(</option>      
+      if (error){
+        console.log(error)
+        return <option>Error </option>;
+      }    
       return(  
-        <div className = "page_header">
+        <div>
           <h1>Items I'm Borrowing</h1>
           {data.viewer.borrowed.map(item =>(
           <div key = {item.id}>

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import './App.css';
 import { ApolloProvider } from "react-apollo";
-import { BrowserRouter as Router, Route, Link } from 'react-router-dom'
+import { BrowserRouter as Router, Route } from 'react-router-dom'
 import { 
   MuiThemeProvider, 
   createMuiTheme,

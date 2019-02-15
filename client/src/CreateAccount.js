@@ -24,7 +24,6 @@ const SIGNUP = gql`
   }
 `;
 
-
 function CreateAccount({
   setCSRFToken,
 }){
@@ -32,8 +31,6 @@ function CreateAccount({
     <Mutation mutation={SIGNUP}
       onCompleted = {(data) =>{
       localStorage.setItem('token', data.signup.csrfToken)
-      localStorage.setItem('user', data.signup.user.username)
-      localStorage.setItem('id', data.signup.user.id)
       setCSRFToken(data.signup.csrfToken)
       window.location = "/"
     }}

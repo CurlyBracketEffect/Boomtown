@@ -16,21 +16,20 @@
 const { ApolloError } = require('apollo-server-express');
 
 // @TODO: Uncomment these lines later when we add auth
-const jwt = require("jsonwebtoken")
-const authMutations = require("./auth")
+const jwt = require('jsonwebtoken');
+const authMutations = require('./auth');
 // -------------------------------
 const { UploadScalar, DateScalar } = require('../custom-types');
 
-const authenticate = require('../authenticate')
+const authenticate = require('../authenticate');
 
-module.exports = (app) => {
+module.exports = app => {
   return {
     // Upload: UploadScalar,
     // Date: DateScalar,
 
     Query: {
-     async viewer(parent, args, context) {
-
+      async viewer(parent, args, context) {
         //PART 2
         /**
          * @TODO: Authentication - Server
@@ -47,14 +46,15 @@ module.exports = (app) => {
          *  in which case you'll return null
          */
 
-        const userID = authenticate(app, context.req)
-        
-        const user = await context.pgResource.getUserById(userID)
+        const userID = authenticate(app, context.req);
 
-        return user
+        const user = await context.pgResource.getUserById(userID);
+
+        return user;
       },
-      async user(parent, { id }, { pgResource, req }, info) { //WORKS!!!
-        authenticate(app, req)
+      async user(parent, { id }, { pgResource, req }, info) {
+        //WORKS!!!
+        // authenticate(app, req)
         try {
           const user = await pgResource.getUserById(id);
           return user;
@@ -62,19 +62,21 @@ module.exports = (app) => {
           throw new ApolloError(e);
         }
       },
-      async items(parent, args , { pgResource, req }, info) { //WORKS
-        authenticate(app, req)
+      async items(parent, args, { pgResource, req }, info) {
+        //WORKS
+        // authenticate(app, req)
         try {
           const items = await pgResource.getItems(args.filter);
-          console.log('ITEMS', items)
+          console.log('ITEMS', items);
           return items;
         } catch (e) {
           throw new ApolloError(e);
         }
         // -------------------------------
       },
-      async tags(parent, { id }, { pgResource, req}, info) { //WORKS
-        authenticate(app, req)
+      async tags(parent, { id }, { pgResource, req }, info) {
+        //WORKS
+        // authenticate(app, req)
         try {
           const allTags = await pgResource.getTags();
           return allTags;
@@ -95,16 +97,17 @@ module.exports = (app) => {
        *  Items (GraphQL type) the user has lent (items) and borrowed (borrowed).
        *
        */
-      async items(user,{ },{ pgResource  }) { //WORKS
+      async items(user, {}, { pgResource }) {
+        //WORKS
         try {
           const items = await pgResource.getItemsForUser(user.id);
           return items;
         } catch (e) {
           throw new ApolloError(e);
         }
-      
       },
-      async borrowed(user,{ },{ pgResource }) { //WORKS
+      async borrowed(user, {}, { pgResource }) {
+        //WORKS
         try {
           const items = await pgResource.getBorrowedItemsForUser(user.id);
           return items;
@@ -127,9 +130,10 @@ module.exports = (app) => {
        *
        */
       // @TODO: Uncomment these lines after you define the Item type with these fields
-      async owner(parent, { }, { pgResource }, info) { //WORKs
+      async owner(parent, {}, { pgResource }, info) {
+        //WORKs
         try {
-          if (parent.ownerid == null) return null
+          if (parent.ownerid == null) return null;
           const owner = await pgResource.getUserById(parent.ownerid);
           return owner;
         } catch (e) {
@@ -137,7 +141,8 @@ module.exports = (app) => {
         }
         // -------------------------------
       },
-      async tags(parent, { }, { pgResource }, info){ //WORKS
+      async tags(parent, {}, { pgResource }, info) {
+        //WORKS
         try {
           const tags = await pgResource.getTagsForItem(parent.id);
           return tags;
@@ -145,18 +150,19 @@ module.exports = (app) => {
           throw new ApolloError(e);
         }
       },
-      async borrower(parent, { }, { pgResource }, info) { //WORKS
+      async borrower(parent, {}, { pgResource }, info) {
+        //WORKS
         /**
          * @TODO: Replace this mock return statement with the correct user from Postgres
          * or null in the case where the item has not been borrowed.
          */
         try {
-          const tags = await pgResource.getUserById(parent.borrowerid)
-          return tags
+          const tags = await pgResource.getUserById(parent.borrowerid);
+          return tags;
         } catch (e) {
-          throw new ApolloError(e)
+          throw new ApolloError(e);
         }
-        return null
+        return null;
         // -------------------------------
       }
       //
@@ -169,8 +175,8 @@ module.exports = (app) => {
       // -------------------------------
 
       addItem: async (parent, args, { pgResource, req }, info) => {
-        authenticate(app, req)        
-        /**
+        // authenticate(app, req)
+        /*
          *  @TODO: Destructuring
          *
          *  The 'args' and 'context' parameters of this resolver can be destructured
@@ -185,9 +191,8 @@ module.exports = (app) => {
 
         // image = await image;
         // const user = await jwt.decode(context.token, app.get('JWT_SECRET'));
-        const newItem = await pgResource.saveNewItem(
-          args.input,
-        );
+        args.input.ownerid = authenticate(app, req);
+        const newItem = await pgResource.saveNewItem(args.input);
         return newItem;
       }
     }
