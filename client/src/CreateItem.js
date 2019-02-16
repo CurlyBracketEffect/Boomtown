@@ -18,6 +18,9 @@ const CreateItem = () => (
   <div>
     <h1>Create and Item</h1>
     <Mutation
+      onError = {(error) => {
+        alert(error)
+      }}
       mutation={CREATEITEM}
       onCompleted={data => {
         console.log(data);
@@ -26,7 +29,7 @@ const CreateItem = () => (
     >
       {(createItem, { data }) => (
         <Formik
-          initialValues={{ title: '', description: '', tagIDs: '' }}
+          initialValues={{ title: '', description: '', tags: '' }}
           validate={values => {
             let errors = {};
             if (!values.title) {
@@ -35,8 +38,8 @@ const CreateItem = () => (
             if (!values.description) {
               errors.description = 'Required';
             }
-            if (!values.tagIDs) {
-              errors.tags = 'Required';//DOESN'T WORK
+            if (!values.tags) {
+              errors.tags = 'Required';//DOESN'T WORK Breaks component
             }
             return errors;
           }}
@@ -88,6 +91,8 @@ const CreateItem = () => (
                   />
                 )}
               </AllTags>
+              <ErrorMessage name="tags" component="div" />
+
               <button type="submit" disabled={isSubmitting}>
                 Submit
               </button>

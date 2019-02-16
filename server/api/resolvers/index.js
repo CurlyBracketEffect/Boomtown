@@ -54,7 +54,7 @@ module.exports = app => {
       },
       async user(parent, { id }, { pgResource, req }, info) {
         //WORKS!!!
-        // authenticate(app, req)
+        authenticate(app, req)
         try {
           const user = await pgResource.getUserById(id);
           return user;
@@ -64,7 +64,7 @@ module.exports = app => {
       },
       async items(parent, args, { pgResource, req }, info) {
         //WORKS
-        // authenticate(app, req)
+        authenticate(app, req)
         try {
           const items = await pgResource.getItems(args.filter);
           console.log('ITEMS', items);
@@ -76,7 +76,7 @@ module.exports = app => {
       },
       async tags(parent, { id }, { pgResource, req }, info) {
         //WORKS
-        // authenticate(app, req)
+        authenticate(app, req)
         try {
           const allTags = await pgResource.getTags();
           return allTags;
@@ -175,7 +175,7 @@ module.exports = app => {
       // -------------------------------
 
       addItem: async (parent, args, { pgResource, req }, info) => {
-        // authenticate(app, req)
+        authenticate(app, req)
         /*
          *  @TODO: Destructuring
          *
@@ -194,7 +194,48 @@ module.exports = app => {
         args.input.ownerid = authenticate(app, req);
         const newItem = await pgResource.saveNewItem(args.input);
         return newItem;
-      }
+      },
+      borrowItem: async (parent, args, { pgResource, req }, info) => {
+        authenticate(app, req)
+        /*
+         *  @TODO: Destructuring
+         *
+         *  The 'args' and 'context' parameters of this resolver can be destructured
+         *  to make things more readable and avoid duplication.
+         *
+         *  When you're finished with this resolver, destructure all necessary
+         *  parameters in all of your resolver functions.
+         *
+         *  Again, you may look at the user resolver for an example of what
+         *  destructuring should look like.
+         */
+
+        // image = await image;
+        // const user = await jwt.decode(context.token, app.get('JWT_SECRET'));
+        args.input.borrowerid = authenticate(app, req);
+        const borrowedItem = await pgResource.borrowItem(args.input);
+        return borrowedItem;
+      },
+      returnItem: async (parent, args, { pgResource, req }, info) => {
+        authenticate(app, req)
+        /*
+         *  @TODO: Destructuring
+         *
+         *  The 'args' and 'context' parameters of this resolver can be destructured
+         *  to make things more readable and avoid duplication.
+         *
+         *  When you're finished with this resolver, destructure all necessary
+         *  parameters in all of your resolver functions.
+         *
+         *  Again, you may look at the user resolver for an example of what
+         *  destructuring should look like.
+         */
+
+        // image = await image;
+        // const user = await jwt.decode(context.token, app.get('JWT_SECRET'));
+        const returnedItem = await pgResource.returnItem(args.input);
+        return returnedItem;
+      },
     }
   };
 };

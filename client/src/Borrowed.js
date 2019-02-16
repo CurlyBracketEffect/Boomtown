@@ -1,6 +1,7 @@
 import React from 'react'
 import { Query } from "react-apollo";
 import gql from "graphql-tag";
+import ReturnButton from "./ReturnButton"
 
 
 const Borrowed = ()=> (
@@ -30,6 +31,7 @@ const Borrowed = ()=> (
           <div key = {item.id}>
             <p>{item.title} </p>
             <p>{item.description} </p>
+            <ReturnButton itemID = {{itemID: item.id}}/>
           </div>
       ))}
         </div>

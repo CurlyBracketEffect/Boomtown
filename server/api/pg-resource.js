@@ -235,8 +235,6 @@ module.exports = postgres => {
       }
     },
     async createUser(userToAdd) {
-      //Returns the borrower of an item
-      // PART 1
       const user = await postgres.query({
         text: `INSERT INTO users (username, email, bio, password) VALUES ($1, $2, $3, $4)RETURNING *`,
         values: [
@@ -247,6 +245,25 @@ module.exports = postgres => {
         ]
       });
       return user.rows[0];
-    }
+    },
+    async borrowItem({
+      borrowerid,
+      itemID,
+    }) {
+      const item = await postgres.query({
+        text: `UPDATE items SET borrowerid = $1 WHERE id = $2 RETURNING *`,
+        values: [borrowerid, itemID]
+      });
+      return item;
+    },
+    async returnItem({
+      itemID,
+    }) {
+      const item = await postgres.query({
+        text: `UPDATE items SET borrowerid = null WHERE id = $1 RETURNING *`,
+        values: [itemID]
+      });
+      return item;
+    },
   };
 };
