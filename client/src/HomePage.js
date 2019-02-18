@@ -8,7 +8,7 @@ function HomePage({
   setCSRFToken,
 }){
   return(
-    <div>
+    <div className="homepage">
       <WelcomeSBP/>
       <LoginForm setCSRFToken = {setCSRFToken}/>
       <Link to="/SignUp"><button>Create an Account</button></Link>

@@ -3,9 +3,9 @@ import './App.css';
 import { ApolloProvider } from "react-apollo";
 import { BrowserRouter as Router, Route } from 'react-router-dom'
 import { 
-  MuiThemeProvider, 
   createMuiTheme,
 } from '@material-ui/core'
+import {ThemeProvider} from '@material-ui/styles'
 
 import HomePage from './HomePage';
 import SignUp from './SignUp';
@@ -28,11 +28,9 @@ function App() {
 
   return (
       <ApolloProvider client={apolloClient}>
-        <MuiThemeProvider theme={theme}>
+        <ThemeProvider theme={theme}>
           <Router>
             <div className="App">
-            
-            
             {csrfToken == null && (
               <React.Fragment>
                 <Route path="/" exact render ={() =>(
@@ -45,10 +43,12 @@ function App() {
             )}
             {csrfToken != null && (
               <React.Fragment>
-                <Header setCSRFToken = {setCSRFToken}/>
+                  <Header setCSRFToken = {setCSRFToken}/>
+                <div style={{display: 'flex'}}>
+
                 <SideBar/>
                 <Route path="/" exact render = {() => (
-                  <Dashboard setCSRFToken = {setCSRFToken}/>
+                  <Dashboard />                  
                 )}/>
                 <Route path="/borrowed" exact render = {() => (
                   <Borrowed/>
@@ -59,11 +59,12 @@ function App() {
                 <Route path="/items/create" exact render = {() => (
                   <CreateItem/>
                 )}/>
+                </div>
               </React.Fragment>
             )}    
             </div>
           </Router>
-        </MuiThemeProvider>  
+        </ThemeProvider>  
       </ApolloProvider>
     );
 }

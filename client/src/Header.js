@@ -22,8 +22,7 @@ const Header = ({
         return <option>Error </option>;
       }
     return(
-      <div>
-        <div> 
+        <div className="Header"> 
           <h4>You are logged in as: {data.viewer.username}</h4>
           <Button varient="contained" onClick = {() => {
             localStorage.removeItem('token')
@@ -31,7 +30,6 @@ const Header = ({
             window.location = "/"
         }}>Log Out</Button>
         </div>
-    </div>
     )
     }}
   </Query>
